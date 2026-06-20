@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/ngratzi/foundry
-    targetRevision: main
+    targetRevision: master
     path: deploy/smoke-workflow
   destination:
     server: https://kubernetes.default.svc

@@ -2,7 +2,7 @@ name: smoke-workflow
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'workflows/smoke/**'
 

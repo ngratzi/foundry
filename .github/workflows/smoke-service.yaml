@@ -2,7 +2,7 @@ name: smoke-service
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'services/smoke/**'
 
