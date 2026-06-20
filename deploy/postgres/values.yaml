@@ -10,10 +10,18 @@ postgresql:
     persistence:
       enabled: true
       size: 5Gi
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 250m
-    limits:
-      memory: 512Mi
-      cpu: 500m
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 30
+    livenessProbe:
+      initialDelaySeconds: 120
+      failureThreshold: 6
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
