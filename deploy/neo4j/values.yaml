@@ -1,0 +1,18 @@
+neo4j:
+  name: neo4j
+  password: ""
+  existingPasswordSecret: neo4j-secret
+  existingPasswordSecretKey: password
+  edition: community
+volumes:
+  data:
+    mode: defaultStorageClass
+    requests:
+      storage: 5Gi
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 250m
+  limits:
+    memory: 1Gi
+    cpu: 500m
