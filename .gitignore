@@ -1,0 +1,24 @@
+# env files
+.env
+.env.*
+!.env.example
+
+# kubeconfig
+kubeconfig
+*.kubeconfig
+kubeconfig.yaml
+
+# secrets
+*.pem
+*.key
+secrets/
+
+# node
+node_modules/
+
+# ide
+.idea/
+.vscode/
+
+# os
+.DS_Store

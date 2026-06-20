@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: smoke-workflow
+  namespace: foundry
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: smoke-workflow
+              image: ghcr.io/ngratzi/smoke-workflow:1.0.0
+          restartPolicy: OnFailure

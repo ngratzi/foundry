@@ -1,0 +1,47 @@
+name: smoke-workflow
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workflows/smoke/**'
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/smoke-workflow
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set version
+        id: version
+        run: echo "tag=$(jq -r '.["smoke-workflow"]' versions.json)" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: workflows/smoke
+          push: true
+          tags: ${{ env.IMAGE }}:${{ steps.version.outputs.tag }}
+
+      - name: Update deployment manifest
+        run: |
+          sed -i "s|${{ env.IMAGE }}:.*|${{ env.IMAGE }}:${{ steps.version.outputs.tag }}|" deploy/smoke-workflow/cronjob.yaml
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add deploy/smoke-workflow/cronjob.yaml
+          git diff --cached --quiet || git commit -m "deploy smoke-workflow:${{ steps.version.outputs.tag }}"
+          git push
