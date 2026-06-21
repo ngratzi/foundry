@@ -30,18 +30,25 @@ jobs:
         id: version
         run: echo "tag=$(jq -r '.["smoke-service"]' versions.json)" >> $GITHUB_OUTPUT
 
-      - name: Build and push
+      - name: Build and push image
+        if: contains(github.event.commits[0].modified, 'services/smoke/src') || contains(github.event.commits[0].added, 'services/smoke/src')
         uses: docker/build-push-action@v5
         with:
           context: services/smoke
           push: true
           tags: ${{ env.IMAGE }}:${{ steps.version.outputs.tag }}
 
-      - name: Update deployment manifest
+      - name: Regenerate migrate.yaml from changelog
+        run: bash scripts/generate-migrate.sh smoke-service
+
+      - name: Update deployment manifest image tag
         run: |
           sed -i "s|${{ env.IMAGE }}:.*|${{ env.IMAGE }}:${{ steps.version.outputs.tag }}|" deploy/smoke-service/deployment.yaml
+
+      - name: Commit and push manifest changes
+        run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add deploy/smoke-service/deployment.yaml
+          git add deploy/smoke-service/
           git diff --cached --quiet || git commit -m "deploy smoke-service:${{ steps.version.outputs.tag }}"
           git push
