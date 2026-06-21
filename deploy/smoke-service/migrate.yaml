@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smoke-changelog
+  namespace: foundry
+data:
+  db.changelog-master.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <databaseChangeLog
+      xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+      <include file="/changelog/changes/001-init.sql"/>
+      <include file="/changelog/changes/002-create-events.sql"/>
+    </databaseChangeLog>
+  001-init.sql: |
+    --liquibase formatted sql
+
+    --changeset smoke:001
+    CREATE SCHEMA IF NOT EXISTS smoke;
+  002-create-events.sql: |
+    --liquibase formatted sql
+
+    --changeset smoke:002
+    CREATE TABLE smoke.events (
+      id         SERIAL PRIMARY KEY,
+      name       TEXT        NOT NULL,
+      payload    JSONB,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smoke-service-migrate
+  namespace: foundry
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: liquibase
+          image: liquibase/liquibase:4.27
+          args:
+            - --url=jdbc:postgresql://postgres-postgresql.foundry.svc.cluster.local:5432/foundry?currentSchema=smoke
+            - --username=foundry
+            - --password=$(DB_PASSWORD)
+            - --changeLogFile=/changelog/db.changelog-master.xml
+            - update
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+          volumeMounts:
+            - name: changelog
+              mountPath: /changelog/changes
+            - name: changelog
+              mountPath: /changelog/db.changelog-master.xml
+              subPath: db.changelog-master.xml
+      volumes:
+        - name: changelog
+          configMap:
+            name: smoke-changelog
