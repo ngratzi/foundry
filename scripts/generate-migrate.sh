@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Regenerates deploy/<service>/migrate.yaml ConfigMap from services/<service>/db/changelog/
+# Regenerates deploy/<service>/changelog-configmap.yaml from services/<service>/db/changelog/
 set -euo pipefail
 
 SERVICE=$1
 CHANGELOG_DIR="services/${SERVICE}/db/changelog"
-MIGRATE_FILE="deploy/${SERVICE}/migrate.yaml"
-DB_PASSWORD_KEY="password"
+CONFIGMAP_FILE="deploy/${SERVICE}/changelog-configmap.yaml"
 PG_HOST="postgres-postgresql.foundry.svc.cluster.local"
 PG_DB="foundry"
+SCHEMA="${SERVICE//-/_}"
 
 # Collect SQL files in order
 SQL_FILES=$(find "${CHANGELOG_DIR}/changes" -name "*.sql" | sort)
@@ -27,7 +27,7 @@ for f in $SQL_FILES; do
   SQL_DATA="${SQL_DATA}  ${filename}: |\n${content}\n"
 done
 
-cat > "${MIGRATE_FILE}" <<EOF
+cat > "${CONFIGMAP_FILE}" <<EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -42,45 +42,6 @@ data:
       xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 $(echo -e "$INCLUDES")    </databaseChangeLog>
-$(echo -e "$SQL_DATA")---
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: ${SERVICE}-migrate
-  namespace: foundry
-  annotations:
-    argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
-spec:
-  ttlSecondsAfterFinished: 300
-  template:
-    spec:
-      restartPolicy: OnFailure
-      containers:
-        - name: liquibase
-          image: liquibase/liquibase:4.27
-          args:
-            - --url=jdbc:postgresql://${PG_HOST}:5432/${PG_DB}?currentSchema=${SERVICE//-/_}
-            - --username=foundry
-            - --password=\$(DB_PASSWORD)
-            - --changeLogFile=/changelog/db.changelog-master.xml
-            - update
-          env:
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: ${DB_PASSWORD_KEY}
-          volumeMounts:
-            - name: changelog
-              mountPath: /changelog/changes
-            - name: changelog
-              mountPath: /changelog/db.changelog-master.xml
-              subPath: db.changelog-master.xml
-      volumes:
-        - name: changelog
-          configMap:
-            name: ${SERVICE}-changelog
-EOF
+$(echo -e "$SQL_DATA")EOF
 
-echo "Generated ${MIGRATE_FILE}"
+echo "Generated ${CONFIGMAP_FILE}"

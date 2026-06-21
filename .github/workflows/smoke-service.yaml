@@ -38,7 +38,7 @@ jobs:
           push: true
           tags: ${{ env.IMAGE }}:${{ steps.version.outputs.tag }}
 
-      - name: Regenerate migrate.yaml from changelog
+      - name: Regenerate changelog configmap from changelog files
         run: bash scripts/generate-migrate.sh smoke-service
 
       - name: Update deployment manifest image tag
