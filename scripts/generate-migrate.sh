@@ -33,6 +33,9 @@ kind: ConfigMap
 metadata:
   name: ${SERVICE}-changelog
   namespace: foundry
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
 data:
   db.changelog-master.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
