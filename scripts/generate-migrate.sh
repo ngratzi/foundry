@@ -16,7 +16,7 @@ SQL_FILES=$(find "${CHANGELOG_DIR}/changes" -name "*.sql" | sort)
 INCLUDES=""
 for f in $SQL_FILES; do
   filename=$(basename "$f")
-  INCLUDES="${INCLUDES}      <include file=\"/changelog/changes/${filename}\"/>\n"
+  INCLUDES="${INCLUDES}      <include file=\"changes/${filename}\"/>\n"
 done
 
 # Build ConfigMap data entries for each SQL file

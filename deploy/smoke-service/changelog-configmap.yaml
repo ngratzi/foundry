@@ -14,8 +14,8 @@ data:
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
-      <include file="/changelog/changes/001-init.sql"/>
-      <include file="/changelog/changes/002-create-events.sql"/>
+      <include file="changes/001-init.sql"/>
+      <include file="changes/002-create-events.sql"/>
     </databaseChangeLog>
   001-init.sql: |
     --liquibase formatted sql
