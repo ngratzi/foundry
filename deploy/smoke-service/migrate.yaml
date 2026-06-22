@@ -16,7 +16,7 @@ spec:
           image: liquibase/liquibase:4.27
           args:
             - --searchPath=/changelog
-            - --url=jdbc:postgresql://postgres-postgresql.foundry.svc.cluster.local:5432/foundry?currentSchema=smoke
+            - --url=jdbc:postgresql://postgres-postgresql.foundry.svc.cluster.local:5432/foundry
             - --username=foundry
             - --password=$(DB_PASSWORD)
             - --changeLogFile=db.changelog-master.xml
